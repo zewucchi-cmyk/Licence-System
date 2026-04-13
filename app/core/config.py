@@ -20,6 +20,11 @@ class DatabaseConfig(BaseModel):
         "pk": "pk_%(table_name)s",
     }  # стандартные имена для Alembic
 
+class LicenceApi(BaseModel):
+    prefix: str = "/api"
+    licences: str = "/licences"
+    version: str = "/v1"
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -30,6 +35,7 @@ class Settings(BaseSettings):
 
     run: RunConfig = RunConfig()
     db: DatabaseConfig
+    api: LicenceApi = LicenceApi()
 
 
 settings = Settings()
