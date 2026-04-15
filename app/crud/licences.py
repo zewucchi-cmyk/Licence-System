@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import Licence
 from core.schemas.licence import LicenceCreate
+from core.utils.keygen import generate_licence_key
+from crud.products import get_product_by_id
 
 async def get_all_licences(session: AsyncSession):
     stmt = select(Licence).order_by(Licence.id)
@@ -12,10 +14,18 @@ async def get_all_licences(session: AsyncSession):
     return result.all()
 
 async def create_licence(session: AsyncSession, licence_create: LicenceCreate):
+    product = await get_product_by_id(session=session, product_id=licence_create.product_id)
+
+    if not product:
+        return None
+
+    key = generate_licence_key(product.key_prefix)
+
     licence = Licence(
-        key=licence_create.key,
+        key=key,
         active=licence_create.active,
-        expires_at=datetime.now() + timedelta(days=licence_create.days)
+        expires_at=datetime.now() + timedelta(days=licence_create.days),
+        product_id=licence_create.product_id,
     )
 
     session.add(licence)

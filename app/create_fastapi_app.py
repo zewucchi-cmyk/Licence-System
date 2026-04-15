@@ -9,5 +9,5 @@ async def lifespan(app: FastAPI):
     await db_helper.dispose()
 
 def create_app() -> FastAPI:
-    app = FastAPI(lifespan=lifespan)
+    app = FastAPI(Title="License System API", lifespan=lifespan)
     return app
