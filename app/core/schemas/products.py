@@ -2,14 +2,14 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class ProductBase(BaseModel):
-    name: str
+    product_name: str
     key_prefix: str
 
 class ProductCreate(ProductBase):
     pass
 
 class ProductUpdate(BaseModel):
-    name: Optional[str] = None
+    product_name: Optional[str] = None
     key_prefix: Optional[str] = None
 
 class ProductRead(ProductBase):

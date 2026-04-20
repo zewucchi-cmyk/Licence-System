@@ -10,14 +10,13 @@ async def get_all_products(session: AsyncSession):
     return result.all()
 
 async def get_product_by_id(session: AsyncSession, product_id: int):
-    stmt = select(Product).where(Product.id == product_id)
-    result = await session.scalars(stmt)
-    return result.first()
+    return await session.get(Product, product_id)
 
 async def create_product(session: AsyncSession, product_create: ProductCreate, author_id: int):
     product = Product(
         author_id=author_id,
-        **product_create.model_dump(),
+        product_name=product_create.product_name,
+        key_prefix=product_create.key_prefix,
     )
     session.add(product)
     await session.commit()

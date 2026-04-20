@@ -20,9 +20,16 @@ class DatabaseConfig(BaseModel):
         "pk": "pk_%(table_name)s",
     }
 
-class LicenceApi(BaseModel):
+class LicenceAPI(BaseModel):
+    endpoint: str = "/licences"
+
+class ProductAPI(BaseModel):
+    endpoint: str = "/products"
+
+class APIConfig(BaseModel):
+    licences: LicenceAPI = LicenceAPI()
+    products: ProductAPI = ProductAPI()
     prefix: str = "/api"
-    licences: str = "/licences"
     version: str = "/v1"
 
 class Settings(BaseSettings):
@@ -35,7 +42,7 @@ class Settings(BaseSettings):
 
     run: RunConfig = RunConfig()
     db: DatabaseConfig
-    api: LicenceApi = LicenceApi()
+    api: APIConfig = APIConfig()
     secret: str
 
 

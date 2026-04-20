@@ -1,8 +1,8 @@
-"""initial_auth_and_tables
+"""initial_clean_schema
 
-Revision ID: 75b3c462900d
+Revision ID: 2f7e7f4c81a3
 Revises:
-Create Date: 2026-04-14 16:06:19.456120
+Create Date: 2026-04-18 14:56:03.115036
 
 """
 
@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = "75b3c462900d"
+revision: str = "2f7e7f4c81a3"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -51,8 +51,10 @@ def upgrade() -> None:
         "licences",
         sa.Column("key", sa.String(), nullable=False),
         sa.Column("hwid", sa.String(), nullable=True),
-        sa.Column("expires_at", sa.DateTime(), nullable=False),
+        sa.Column("duration_days", sa.Integer(), nullable=False),
+        sa.Column("expires_at", sa.DateTime(), nullable=True),
         sa.Column("active", sa.Boolean(), nullable=False),
+        sa.Column("is_blocked", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("product_id", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
