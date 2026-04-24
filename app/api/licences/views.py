@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from core.models import User
-from core.schemas.licence import LicenceCreate, LicenceUpdate, LicenceExtend
+from core.schemas.licence import LicenceCreate, LicenceUpdate, LicenceExtend, LicenceRead
 from core.models.db_helper import db_helper
 from core.auth.fastapi_users import current_active_user
 
@@ -69,6 +69,37 @@ async def extend_licence(session: Annotated[AsyncSession, Depends(db_helper.sess
     return licence
 
 
+@router.patch("/{key}/freeze")
+async def freeze_licence(
+        key: str,
+        session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
+):
+
+    result = await licences_crud.freeze_licence(key=key, session=session)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Licence not found")
+
+    if result is False:
+        raise HTTPException(status_code=400, detail="Cannot freeze this licence (already frozen or inactive)")
+
+    return {"status": "success", "message": f"licence {key} frozen"}
 
 
+@router.patch("/{key}/unfreeze", response_model=LicenceRead)
+async def unfreeze_licence(
+    key: str,
+    session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
+):
+    result = await licences_crud.unfreeze_licence(key=key, session=session)
 
+    if result is None:
+        raise HTTPException(status_code=404, detail="Licence not found")
+
+    if result is False:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot unfreeze: licence is not frozen or inactive"
+        )
+
+    return result

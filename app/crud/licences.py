@@ -95,3 +95,44 @@ async def extend_licence(extend_data: LicenceExtend, key: str, session: AsyncSes
     await session.refresh(licence)
     return licence
 
+async def freeze_licence(key: str, session: AsyncSession):
+    licence = await get_licence_by_key(key=key, session=session)
+    if not licence:
+        return None
+
+    if not licence.active or licence.is_frozen:
+        return False
+
+    now = datetime.now()
+
+    if licence.expires_at and licence.expires_at <= now:
+        return False
+
+    remaining_time = licence.expires_at - now
+
+    licence.duration_days = remaining_time.total_seconds() / 86400
+
+    licence.is_frozen = True
+    licence.expires_at = None
+
+    await session.commit()
+    await session.refresh(licence)
+    return True
+
+async def unfreeze_licence(key: str, session: AsyncSession):
+    licence = await get_licence_by_key(key=key, session=session)
+
+    if not licence:
+        return None
+
+    if not licence.is_frozen:
+        return False
+
+    licence.is_frozen = False
+    licence.expires_at = datetime.now() + timedelta(days=licence.duration_days)
+    licence.active = True
+
+    await session.commit()
+    await session.refresh(licence)
+    return licence
+

@@ -17,6 +17,7 @@ class Licence(IntIdPKMixin, Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(default=None, nullable=True)
     active: Mapped[bool] = mapped_column(default=False)
     is_blocked: Mapped[bool] = mapped_column(default=False)
+    is_frozen: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
