@@ -11,9 +11,7 @@ from .base import Base
 from .mixins.int_id_pk import IntIdPKMixin
 
 
-
 class User(IntIdPKMixin, SQLAlchemyBaseUserTable[int], Base):
-
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(unique=True)

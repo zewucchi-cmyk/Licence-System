@@ -2,9 +2,11 @@ from pydantic import PostgresDsn
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class RunConfig(BaseModel):
     host: str = "localhost"
     port: int = 8080
+
 
 class DatabaseConfig(BaseModel):
     url: PostgresDsn
@@ -20,17 +22,21 @@ class DatabaseConfig(BaseModel):
         "pk": "pk_%(table_name)s",
     }
 
+
 class LicenceAPI(BaseModel):
     endpoint: str = "/licences"
 
+
 class ProductAPI(BaseModel):
     endpoint: str = "/products"
+
 
 class APIConfig(BaseModel):
     licences: LicenceAPI = LicenceAPI()
     products: ProductAPI = ProductAPI()
     prefix: str = "/api"
     version: str = "/v1"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,10 +9,12 @@ from core.schemas.licence import LicenceCreate, LicenceUpdate, LicenceExtend
 from core.utils.keygen import generate_licence_key
 from crud.products import get_product_by_id
 
-async def get_all_licences(session: AsyncSession):
+
+async def get_all_licences(session: AsyncSession) -> Sequence[Licence]:
     stmt = select(Licence).order_by(Licence.id)
     result = await session.scalars(stmt)
     return result.all()
+
 
 async def create_licence(session: AsyncSession, licence_create: LicenceCreate):
     product = await get_product_by_id(session=session, product_id=licence_create.product_id)
@@ -31,13 +34,15 @@ async def create_licence(session: AsyncSession, licence_create: LicenceCreate):
     await session.commit()
     return licence
 
-async def get_licence_by_key(key: str, session: AsyncSession):
+
+async def get_licence_by_key(key: str, session: AsyncSession) -> Licence | None:
     stmt = select(Licence).where(Licence.key == key)
     result = await session.execute(stmt)
 
     return result.scalars().first()
 
-async def activate_licence(key: str, hwid: str, session: AsyncSession):
+
+async def activate_licence(key: str, hwid: str, session: AsyncSession) -> Licence | None | bool:
     licence = await get_licence_by_key(key=key, session=session)
 
     if not licence:
@@ -46,27 +51,43 @@ async def activate_licence(key: str, hwid: str, session: AsyncSession):
     if licence.is_blocked:
         return False
 
+    if licence.hwid is not None and licence.hwid != hwid:
+        return "hwid_mismatch"
+
     licence.active = True
     if licence.expires_at is None:
         licence.expires_at = datetime.now() + timedelta(days=licence.duration_days)
+
     licence.hwid = hwid
 
     await session.commit()
+    await session.refresh(licence)
 
     return licence
 
-async def verify_licence(key: str, hwid: str, session: AsyncSession):
+
+async def verify_licence(key: str, hwid: str, session: AsyncSession) -> Licence | str | None:
     licence = await get_licence_by_key(key=key, session=session)
 
     if licence is None:
+        return None
+
+    if licence.hwid is None and not licence.active:
+        return "not_activated"
+
+    if licence.is_blocked:
         return False
 
-    if licence.active and licence.hwid == hwid and not licence.is_blocked and licence.expires_at > datetime.now():
-        return True
 
-    return False
+    if licence.expires_at and licence.expires_at < datetime.now():
+        return False
 
-async def update_licence(key: str, update_data: LicenceUpdate, session: AsyncSession):
+    if hwid != licence.hwid:
+        return "hwid_mismatch"
+
+    return licence
+
+async def update_licence(key: str, update_data: LicenceUpdate, session: AsyncSession) -> Licence | None:
     data = update_data.model_dump(exclude_unset=True) if hasattr(update_data, 'model_dump') else update_data
     licence = await get_licence_by_key(key=key, session=session)
 
@@ -78,7 +99,8 @@ async def update_licence(key: str, update_data: LicenceUpdate, session: AsyncSes
         return licence
     return None
 
-async def extend_licence(extend_data: LicenceExtend, key: str, session: AsyncSession):
+
+async def extend_licence(extend_data: LicenceExtend, key: str, session: AsyncSession) -> Licence | None:
     licence = await get_licence_by_key(key=key, session=session)
     if not licence:
         return None
@@ -95,7 +117,8 @@ async def extend_licence(extend_data: LicenceExtend, key: str, session: AsyncSes
     await session.refresh(licence)
     return licence
 
-async def freeze_licence(key: str, session: AsyncSession):
+
+async def freeze_licence(key: str, session: AsyncSession) -> Licence | None | bool:
     licence = await get_licence_by_key(key=key, session=session)
     if not licence:
         return None
@@ -110,16 +133,17 @@ async def freeze_licence(key: str, session: AsyncSession):
 
     remaining_time = licence.expires_at - now
 
-    licence.duration_days = remaining_time.total_seconds() / 86400
+    licence.duration_days = int(remaining_time.total_seconds() / 86400)
 
     licence.is_frozen = True
     licence.expires_at = None
 
     await session.commit()
     await session.refresh(licence)
-    return True
+    return licence
 
-async def unfreeze_licence(key: str, session: AsyncSession):
+
+async def unfreeze_licence(key: str, session: AsyncSession) -> Licence | None | bool:
     licence = await get_licence_by_key(key=key, session=session)
 
     if not licence:
@@ -135,4 +159,3 @@ async def unfreeze_licence(key: str, session: AsyncSession):
     await session.commit()
     await session.refresh(licence)
     return licence
-

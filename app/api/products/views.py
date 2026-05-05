@@ -2,12 +2,14 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 
 from core.models import User, db_helper
 from core.schemas.products import ProductCreate, ProductRead
-from core.auth.fastapi_users import current_active_user
+from core.dependencies.auth import superuser_required
 from crud import products as products_crud
+from core.constants.errors import (
+    PRODUCT_NOT_FOUND
+    )
 
 router = APIRouter(tags=["products"])
 
@@ -16,15 +18,12 @@ router = APIRouter(tags=["products"])
 async def create_product(
         session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
         product: ProductCreate,
-        user: Annotated[User, Depends(current_active_user)]
+        admin: Annotated[User, Depends(superuser_required)]
 ):
-    if not user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-
     return await products_crud.create_product(
         session=session,
         product_create=product,
-        author_id=user.id
+        author_id=admin.id
     )
 
 
@@ -39,14 +38,19 @@ async def get_all_products(session: Annotated[AsyncSession, Depends(db_helper.se
 async def delete_product(
         product_id: int,
         session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
-        user: Annotated[User, Depends(current_active_user)]
+        admin: Annotated[User, Depends(superuser_required)]
 ):
-    if not user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-
-    return await products_crud.delete_product_by_id(
+    product = await products_crud.get_product_by_id(
         session=session,
         product_id=product_id
     )
 
+    if product is None:
+        raise HTTPException(status_code=404, detail=PRODUCT_NOT_FOUND % product_id)
 
+    await products_crud.delete_product(
+        session=session,
+        product=product
+    )
+    
+    return product

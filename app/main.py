@@ -5,15 +5,19 @@ from create_fastapi_app import create_app
 from api import router as api_router
 from core.auth.fastapi_users import fastapi_users, auth_backend
 from core.schemas.user import UserRead, UserCreate
+
 main_app = create_app()
+
 
 @main_app.get("/")
 async def root():
     return {"message": "running"}
 
+
 @main_app.get("/health")
 async def health():
     return {"message": "healthy"}
+
 
 main_app.include_router(api_router)
 

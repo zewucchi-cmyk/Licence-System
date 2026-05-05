@@ -11,7 +11,7 @@ from .base import Base
 from .mixins.int_id_pk import IntIdPKMixin
 
 
-class Product(IntIdPKMixin,Base):
+class Product(IntIdPKMixin, Base):
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     product_name: Mapped[str] = mapped_column()

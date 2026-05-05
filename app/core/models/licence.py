@@ -9,8 +9,8 @@ from .product import Product
 from .base import Base
 from .mixins.int_id_pk import IntIdPKMixin
 
-class Licence(IntIdPKMixin, Base):
 
+class Licence(IntIdPKMixin, Base):
     key: Mapped[str] = mapped_column(unique=True, index=True)
     hwid: Mapped[Optional[str]] = mapped_column()
     duration_days: Mapped[int] = mapped_column()
